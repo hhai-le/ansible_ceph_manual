@@ -34,10 +34,10 @@
         public network = 10.0.2.0/24
         fsid = "{{ uuid.stdout }}"
         mon_host = "{{ hostvars[inventory_hostname].ansible_host }}"
-        mon_initial members = "{{ hostvars[inventory_hostname].ansible_hostname }}"
+        mon_initial members = "{{ ansible_hostname }}"
 
-        "[mon.{{ hostvars[inventory_hostname].ansible_hostname }}]"
-        host = "{{ hostvars[inventory_hostname].ansible_hostname }}"
+        "[mon.{{ ansible_hostname }}]"
+        host = "{{ ansible_hostname }}"
         mon_addr = "{{ hostvars[inventory_hostname].ansible_host }}"
 
   - name: generate secret key for Cluster monitoring
@@ -56,17 +56,17 @@
     shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
 
   - name: generate monitor map
-    shell: monmaptool --create --add {{ hostvars[inventory_hostname].ansible_hostname }} {{ hostvars[inventory_hostname].ansible_host }} --fsid {{ uuid.stdout }} /etc/ceph/monmap
+    shell: monmaptool --create --add {{ ansible_hostname }} {{ hostvars[inventory_hostname].ansible_host }} --fsid {{ uuid.stdout }} /etc/ceph/monmap
 
   - name: create mon daemon folder
     file:
-      path: "/var/lib/ceph/mon/ceph-{{ hostvars[inventory_hostname].ansible_hostname }}"
+      path: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}"
       state: directory
       owner: ceph
       group: ceph
   
   - name: add key and monmap to mon daemon
-    shell: ceph-mon --cluster ceph --mkfs -i {{ hostvars[inventory_hostname].ansible_hostname }} --monmap /etc/ceph/monmap --keyring /etc/ceph/ceph.mon.keyring
+    shell: ceph-mon --cluster ceph --mkfs -i {{ ansible_hostname }} --monmap /etc/ceph/monmap --keyring /etc/ceph/ceph.mon.keyring
 
   - name: chown /etc/ceph/ceph.*
     file:
@@ -87,13 +87,13 @@
 
   - name: create directory for Manager Daemon
     file:
-      path: /var/lib/ceph/mgr/ceph-{{ hostvars[inventory_hostname].ansible_hostname }}
+      path: /var/lib/ceph/mgr/ceph-{{ ansible_hostname }}
       state: directory
       owner: ceph
       group: ceph
   
   - name: create auth key
-    shell: ceph auth get-or-create mgr.{{ hostvars[inventory_hostname].ansible_hostname }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
+    shell: ceph auth get-or-create mgr.{{ ansible_hostname }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
     register: mgr_key
     
   - name: mgr file keyring
