@@ -57,5 +57,51 @@
 
   - name: generate monitor map
     shell: monmaptool --create --add {{ hostvars[inventory_hostname].ansible_hostname }} {{ hostvars[inventory_hostname].ansible_host }} --fsid {{ uuid.stdout }} /etc/ceph/monmap
+
+  - name: create mon daemon folder
+    file:
+      path: "/var/lib/ceph/mon/ceph-{{ hostvars[inventory_hostname].ansible_hostname }}"
+      state: directory
+      owner: ceph
+      group: ceph
+  
+  - name: add key and monmap to mon daemon
+    shell: ceph-mon --cluster ceph --mkfs -i {{ hostvars[inventory_hostname].ansible_hostname }} --monmap /etc/ceph/monmap --keyring /etc/ceph/ceph.mon.keyring
+
+  - name: chown /etc/ceph/ceph.*
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: ceph
+      group: ceph
+      recurse: true
+    with_items:
+      - /etc/ceph/
+      - /var/lib/ceph/
+  
+  - name: enable Messenger v2 Protocol
+    shell: |
+      ceph mon enable-msgr2
+      ceph config set mon auth_allow_insecure_global_id_reclaim false
+      ceph mgr module enable pg_autoscaler
+
+  - name: create directory for Manager Daemon
+    file:
+      path: /var/lib/ceph/mgr/ceph-{{ hostvars[inventory_hostname].ansible_hostname }}
+      state: directory
+      owner: ceph
+      group: ceph
+  
+  - name: create auth key
+    shell: ceph auth get-or-create mgr.{{ hostvars[inventory_hostname].ansible_hostname }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
+    register: mgr_key
+    
+  - name: mgr file keyring
+    copy:
+      content: "{{ mgr_key.stdout }}"
+      dest: /etc/ceph/ceph.mgr.admin.keyring
+      owner: ceph
+      group: ceph
+
   when: inventory_hostname in groups['deployer']
 
