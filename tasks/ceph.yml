@@ -26,83 +26,74 @@
       var: uuid.stdout
 
   - name: ceph.conf
-    blockinfile:
+    template:
+      src: ceph.conf.j2
       path: /etc/ceph/ceph.conf
-      create: true
-      block: |
-        [global]
-        cluster network = 10.0.10.0/24
-        public network = 10.0.2.0/24
-        fsid = "{{ uuid.stdout }}"
-        mon_host = "{{ hostvars[inventory_hostname].ansible_host }}"
-        mon_initial members = "{{ ansible_hostname }}"
+      owner: ceph
+      group: ceph
+      
+  - name: generate secret key for Cluster monitoring
+    shell: ceph-authtool --create-keyring /etc/ceph/ceph.mon.keyring --gen-key -n mon. --cap mon 'allow *'
 
-        "[mon.{{ ansible_hostname }}]"
-        host = "{{ ansible_hostname }}"
-        mon_addr = "{{ hostvars[inventory_hostname].ansible_host }}"
+  - name: generate secret key for Cluster admin
+    shell: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow *' --cap mgr 'allow *'
 
-  #- name: generate secret key for Cluster monitoring
-  #  shell: ceph-authtool --create-keyring /etc/ceph/ceph.mon.keyring --gen-key -n mon. --cap mon 'allow *'
-#
-  #- name: generate secret key for Cluster admin
-  #  shell: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow *' --cap mgr 'allow *'
-#
-  #- name: generate key for bootstrap
-  #  shell: ceph-authtool --create-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring --gen-key -n client.bootstrap-osd --cap mon 'profile bootstrap-osd' --cap mgr 'allow r'
-#
-  #- name: import generated key
-  #  shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
-#
-  #- name: import generated bootstrap key 
-  #  shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
-#
-  #- name: generate monitor map
-  #  shell: monmaptool --create --add {{ ansible_hostname }} {{ hostvars[inventory_hostname].ansible_host }} --fsid {{ uuid.stdout }} /etc/ceph/monmap
-#
-  #- name: create mon daemon folder
-  #  file:
-  #    path: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}"
-  #    state: directory
-  #    owner: ceph
-  #    group: ceph
-  #
-  #- name: add key and monmap to mon daemon
-  #  shell: ceph-mon --cluster ceph --mkfs -i {{ ansible_hostname }} --monmap /etc/ceph/monmap --keyring /etc/ceph/ceph.mon.keyring
-#
-  #- name: chown /etc/ceph/ceph.*
-  #  file:
-  #    path: "{{ item }}"
-  #    state: directory
-  #    owner: ceph
-  #    group: ceph
-  #    recurse: true
-  #  with_items:
-  #    - /etc/ceph/
-  #    - /var/lib/ceph/
-  #
-  #- name: enable Messenger v2 Protocol
-  #  shell: |
-  #    ceph mon enable-msgr2
-  #    ceph config set mon auth_allow_insecure_global_id_reclaim false
-  #    ceph mgr module enable pg_autoscaler
-#
-  #- name: create directory for Manager Daemon
-  #  file:
-  #    path: /var/lib/ceph/mgr/ceph-{{ ansible_hostname }}
-  #    state: directory
-  #    owner: ceph
-  #    group: ceph
-  #
-  #- name: create auth key
-  #  shell: ceph auth get-or-create mgr.{{ ansible_hostname }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
-  #  register: mgr_key
-  #  
-  #- name: mgr file keyring
-  #  copy:
-  #    content: "{{ mgr_key.stdout }}"
-  #    dest: /etc/ceph/ceph.mgr.admin.keyring
-  #    owner: ceph
-  #    group: ceph
+  - name: generate key for bootstrap
+    shell: ceph-authtool --create-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring --gen-key -n client.bootstrap-osd --cap mon 'profile bootstrap-osd' --cap mgr 'allow r'
+
+  - name: import generated key
+    shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
+
+  - name: import generated bootstrap key 
+    shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
+
+  - name: generate monitor map
+    shell: monmaptool --create --add {{ ansible_hostname }} {{ hostvars[inventory_hostname].ansible_host }} --fsid {{ uuid.stdout }} /etc/ceph/monmap
+
+  - name: create mon daemon folder
+    file:
+      path: "/var/lib/ceph/mon/ceph-{{ ansible_hostname }}"
+      state: directory
+      owner: ceph
+      group: ceph
+  
+  - name: add key and monmap to mon daemon
+    shell: ceph-mon --cluster ceph --mkfs -i {{ ansible_hostname }} --monmap /etc/ceph/monmap --keyring /etc/ceph/ceph.mon.keyring
+
+  - name: chown /etc/ceph/ceph.*
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: ceph
+      group: ceph
+      recurse: true
+    with_items:
+      - /etc/ceph/
+      - /var/lib/ceph/
+  
+  - name: enable Messenger v2 Protocol
+    shell: |
+      ceph mon enable-msgr2
+      ceph config set mon auth_allow_insecure_global_id_reclaim false
+      ceph mgr module enable pg_autoscaler
+
+  - name: create directory for Manager Daemon
+    file:
+      path: /var/lib/ceph/mgr/ceph-{{ ansible_hostname }}
+      state: directory
+      owner: ceph
+      group: ceph
+  
+  - name: create auth key
+    shell: ceph auth get-or-create mgr.{{ ansible_hostname }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
+    register: mgr_key
+    
+  - name: mgr file keyring
+    copy:
+      content: "{{ mgr_key.stdout }}"
+      dest: /etc/ceph/ceph.mgr.admin.keyring
+      owner: ceph
+      group: ceph
 
   when: inventory_hostname in groups['deployer']
 
