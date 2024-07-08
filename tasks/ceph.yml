@@ -56,6 +56,6 @@
     shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
 
   - name: generate monitor map
-    shell: monmaptool --create --add hostvars[inventory_hostname] hostvars[inventory_hostname].ansible_host --fsid uuid.stdout /etc/ceph/monmap
+    shell: monmaptool --create --add {{ hostvars[inventory_hostname] }} {{ hostvars[inventory_hostname].ansible_host }} --fsid {{ uuid.stdout }} /etc/ceph/monmap
   when: inventory_hostname in groups['deployer']
 
