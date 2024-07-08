@@ -1,6 +1,6 @@
 [global]
-cluster network = 10.0.2.0/24
-public network = 10.0.10.0/24
+cluster_network = 10.0.2.0/24
+public_network = 10.0.10.0/24
 fsid = {{ uuid.stdout }}
 mon_host = {{ hostvars[inventory_hostname].ansible_host }}
 mon_initial_members = {{ ansible_hostname }}

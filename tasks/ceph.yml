@@ -35,7 +35,7 @@
       group: ceph
       
   - name: generate secret key for Cluster monitoring
-    shell: ceph-authtool --create-keyring /etc/ceph/ceph.mon.keyring --gen-key -n mon.{{ ansible_hostname }} --cap mon 'allow *'
+    shell: ceph-authtool --create-keyring /etc/ceph/ceph.mon.keyring --gen-key -n mon. --cap mon 'allow *'
 
   - name: generate secret key for Cluster admin
     shell: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow *' --cap mgr 'allow *'
