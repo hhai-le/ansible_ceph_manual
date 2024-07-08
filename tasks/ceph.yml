@@ -79,11 +79,14 @@
       state: started
       enabled: true
 
-  - name: enable Messenger v2 Protocol
-    shell: |
-      ceph mon enable-msgr2
-      ceph config set mon auth_allow_insecure_global_id_reclaim false
-      ceph mgr module enable pg_autoscaler
+  - name: enable Messenger v2 Protocol - ceph mon enable-msgr2
+    shell: ceph mon enable-msgr2
+  
+  - name: enable Messenger v2 Protocol - ceph config set mon auth_allow_insecure_global_id_reclaim false
+    shell: ceph config set mon auth_allow_insecure_global_id_reclaim false
+  
+  - name: enable Messenger v2 Protocol - ceph mgr module enable pg_autoscaler
+    shell: ceph mgr module enable pg_autoscaler
 
   - name: create directory for Manager Daemon
     file:
