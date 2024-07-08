@@ -17,6 +17,8 @@
   apt:
     name: ceph
     state: present
+    update_cache: true
+    
 - block:
   - name: uuidgen
     shell: uuidgen
