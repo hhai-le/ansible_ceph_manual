@@ -110,6 +110,7 @@
     copy:
       src: /etc/ceph/ceph.mgr.admin.keyring
       dest: /var/lib/ceph/mgr/ceph-{{ ansible_hostname }}/keyring
+      remote_src: true
       owner: ceph
       group: ceph
   
