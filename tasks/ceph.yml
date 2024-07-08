@@ -18,7 +18,7 @@
     name: ceph
     state: present
     update_cache: true
-    
+
 - block:
   - name: uuidgen
     shell: uuidgen
@@ -62,7 +62,7 @@
   - name: add key and monmap to mon daemon
     shell: ceph-mon --cluster ceph --mkfs -i {{ ansible_hostname }} --monmap /etc/ceph/monmap --keyring /etc/ceph/ceph.mon.keyring
 
-  - name: chown /etc/ceph/ceph.*
+  - name: chown /etc/ceph and /var/lib/ceph/ 
     file:
       path: "{{ item }}"
       state: directory
