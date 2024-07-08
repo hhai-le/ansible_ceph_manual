@@ -1,0 +1,37 @@
+---
+- name: creating /opt/images for images
+  file:
+    path: /opt/images
+    state: directory
+
+#- name: copy docker images to servers
+#  copy:
+#    src: "{{ item }}"
+#    dest: /opt/images
+#  with_fileglob:
+#    - "/opt/images/*tar"
+
+- name: list all images to copy
+  find: 
+    paths: "/opt/images/*tar" 
+    recurse: yes 
+    patterns: "*tar"
+    excludes: "kolla"
+    use_regex: True
+  delegate_to:  localhost
+
+  register: files_to_copy
+- name: copy docker images to servers  
+  copy: 
+    src: "{{ item.path }}" 
+    dest: //opt/images
+    owner: root
+    mode: 0775
+  with_items: 
+    - "{{ files_to_copy.files }}"
+
+- name: import images
+  shell: "for i in $(ls *tar); do docker load --input $i; done"
+  args:
+    chdir: /opt/images
+

@@ -1,0 +1,60 @@
+---
+- name: remove ceph key if exist
+  file:
+    path: /etc/apt/trusted.gpg.d/ceph.gpg
+    state: absent
+
+- name: ceph apt key
+  shell: wget -q -O- 'https://download.ceph.com/keys/release.asc' | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/ceph.gpg
+
+- name: ceph repo
+  apt_repository:
+    repo: "deb https://download.ceph.com/debian-reef/ {{ ansible_distribution_release }} main" 
+    filename: /etc/apt/sources.list.d/ceph.list
+    state: present
+
+- name: install ceph package
+  apt:
+    name: ceph
+    state: present
+
+- name: uuidgen
+  shell: uuidgen
+  register: uuid
+
+- debug:
+    var: uuid.stdout
+
+- name: ceph.conf
+  blockinfile:
+    path: /etc/ceph/ceph.conf
+    block: |
+      [global]
+      cluster network = 10.0.10.0/24
+      public network = 10.0.2.0/24
+      fsid = "{{ uuid.stdout }}"
+      mon_host = "{{ hostvars[inventory_hostname].ansile_host }}"
+      mon_initial members = "{{ hostvars[inventory_hostname] }}"
+
+      "[mon.{{ ansible_hostname }}]"
+      host = "{{ ansible_hostname }}"
+      mon_addr = "{{ hostvars[inventory_hostname].ansile_host }}"
+
+- name: generate secret key for Cluster monitoring
+  shell: ceph-authtool --create-keyring /etc/ceph/ceph.mon.keyring --gen-key -n mon. --cap mon 'allow *'
+
+- name: generate secret key for Cluster admin
+  shell: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow *' --cap mgr 'allow *'
+
+- name: generate key for bootstrap
+  shell: ceph-authtool --create-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring --gen-key -n client.bootstrap-osd --cap mon 'profile bootstrap-osd' --cap mgr 'allow r'
+
+- name: import generated key
+  shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
+
+- name: import generated bootstrap key 
+  shell: ceph-authtool /etc/ceph/ceph.mon.keyring --import-keyring /var/lib/ceph/bootstrap-osd/ceph.keyring
+
+- name: generate monitor map
+  shell: monmaptool --create --add hostvars[inventory_hostname] hostvars[inventory_hostname].ansile_host --fsid uuid.stdout /etc/ceph/monmap
+
