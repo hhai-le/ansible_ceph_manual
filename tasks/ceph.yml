@@ -30,7 +30,7 @@
   - name: ceph.conf
     template:
       src: ceph.conf.j2
-      path: /etc/ceph/ceph.conf
+      dest: /etc/ceph/ceph.conf
       owner: ceph
       group: ceph
       
