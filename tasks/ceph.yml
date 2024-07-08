@@ -28,6 +28,7 @@
   - name: ceph.conf
     blockinfile:
       path: /etc/ceph/ceph.conf
+      create: true
       block: |
         [global]
         cluster network = 10.0.10.0/24
