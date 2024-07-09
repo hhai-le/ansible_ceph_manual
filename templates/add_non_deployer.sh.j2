@@ -1,0 +1,7 @@
+#!/bin/bash
+
+{% for node in groups["non_deployer"] %}
+scp /etc/ceph/ceph.conf root@{{ hostvars[node].inventory_hostname }}:/etc/ceph/ceph.conf
+scp /etc/ceph/ceph.client.admin.keyring root@{{ hostvars[node].inventory_hostname }}:/etc/ceph
+scp /var/lib/ceph/bootstrap-osd/ceph.keyring root@{{ hostvars[node].inventory_hostname }}:/var/lib/ceph/bootstrap-osd
+{% endfor %}
