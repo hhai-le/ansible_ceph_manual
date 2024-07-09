@@ -130,18 +130,21 @@
     copy:
       src: /etc/ceph/ceph.conf
       dest: "{{ tempfile_1 }}/ceph.conf"
+      remote_src: true
     delegate_to: localhost
   
   - name: ceph.client.admin.keyring to deployer
     copy:
       src: /etc/ceph/ceph.client.admin.keyring
       dest: "{{ tempfile_1 }}/ceph.client.admin.keyring"
+      remote_src: true
     delegate_to: localhost
 
   - name: bootstrap-osd ceph.keyring to deployer
     copy:
       src: /var/lib/ceph/bootstrap-osd/ceph.keyring
       dest: "{{ tempfile_1 }}/bootstrap-osd.ceph.keyring"
+      remote_src: true
     delegate_to: localhost
 
   when: inventory_hostname in groups['deployer']
