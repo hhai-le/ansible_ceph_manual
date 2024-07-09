@@ -120,52 +120,17 @@
       state: started
       enabled: true
 
-  - name: create directory for custom iso
-    tempfile:
-      state: directory
-    register: tempfile_1
-    delegate_to: localhost
+- block: 
+  - name: generate deploy osd script
+    template:
+      src: add_non_deployer.sh.j2
+      dest: /tmp/add_non_deployer.sh
+      mode: '0755'
 
-  - name: copy ceph.conf to deployer
-    fetch:
-      src: /etc/ceph/ceph.conf
-      dest: "{{ tempfile_1.path }}/ceph.conf"
-
-  - name: ceph.client.admin.keyring to deployer
-    fetch:
-      src: /etc/ceph/ceph.client.admin.keyring
-      dest: "{{ tempfile_1.path }}/ceph.client.admin.keyring"
-
-  - name: bootstrap-osd ceph.keyring to deployer
-    fetch:
-      src: /var/lib/ceph/bootstrap-osd/ceph.keyring
-      dest: "{{ tempfile_1.path }}/bootstrap-osd.ceph.keyring"
+  - name: run deploy osd script
+    shell: /bin/bash /tmp/deploy_osd.sh
 
   when: inventory_hostname in groups['deployer']
-
-- block:
-  - name: copy ceph.conf to host
-    copy:
-      dest: /etc/ceph/ceph.conf
-      src: "{{ tempfile_1.path }}/ceph.conf"
-      owner: ceph
-      group: ceph
-  
-  - name: ceph.client.admin.keyring to host
-    copy:
-      dest: /etc/ceph/ceph.client.admin.keyring
-      src: "{{ tempfile_1.path }}/ceph.client.admin.keyring"
-      owner: ceph
-      group: ceph
-
-  - name: bootstrap-osd ceph.keyring to host
-    copy:
-      dest: /var/lib/ceph/bootstrap-osd/ceph.keyring
-      src: "{{ tempfile_1.path }}/bootstrap-osd.ceph.keyring"
-      owner: ceph
-      group: ceph
-
-  when: inventory_hostname in groups['non_deployer']
 
 - block: 
   - name: generate deploy osd script
