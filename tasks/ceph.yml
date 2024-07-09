@@ -119,10 +119,7 @@
       name: ceph-mgr@{{ ansible_hostname }}
       state: started
       enabled: true
-      
-  when: inventory_hostname in groups['deployer']
 
-- block: 
   - name: generate ceph host script
     template:
       src: add_non_deployer.sh.j2
