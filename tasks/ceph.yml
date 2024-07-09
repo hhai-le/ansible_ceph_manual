@@ -121,13 +121,13 @@
       enabled: true
 
 - block: 
-  - name: generate deploy osd script
+  - name: generate ceph host script
     template:
       src: add_non_deployer.sh.j2
       dest: /tmp/add_non_deployer.sh
       mode: '0755'
 
-  - name: run deploy osd script
+  - name: run add ceph host script
     shell: /bin/bash /tmp/deploy_osd.sh
 
   when: inventory_hostname in groups['deployer']
