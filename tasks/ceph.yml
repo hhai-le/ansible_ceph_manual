@@ -98,13 +98,10 @@
   - name: create auth key
     shell: ceph auth get-or-create mgr.{{ ansible_hostname }} mon 'allow profile mgr' osd 'allow *' mds 'allow *'
     register: mgr_key
-
-  - debug:
-      var: mgr_key  
   
   - name: mgr file keyring
     copy:
-      content: "{{ mgr_key.stdout }}"
+      content: "{{ mgr_key.stdout }}\n"
       dest: /etc/ceph/ceph.mgr.admin.keyring
       owner: ceph
       group: ceph
