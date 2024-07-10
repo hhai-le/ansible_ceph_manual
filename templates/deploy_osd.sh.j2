@@ -1,7 +1,5 @@
 #!/bin/bash
 
 {% for dev in hostvars[inventory_hostname].device %}
-parted --script {{ dev }} 'mklabel gpt'
-parted --script {{ dev }} "mkpart primary 0% 100%"
-ceph-volume lvm create --data {{ dev }}1
+ceph-volume lvm create --data {{ dev }}
 {% endfor %}
