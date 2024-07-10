@@ -100,7 +100,7 @@
     register: mgr_key
 
   - debug:
-    var: mgr_key  
+      var: mgr_key  
   
   - name: mgr file keyring
     copy:
